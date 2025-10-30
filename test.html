@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-TW">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>青馬耐震自檢</title>
+
+<link rel="manifest" href="data:application/json,{
+  &quot;name&quot;:&quot;青馬耐震自檢&quot;,
+  &quot;short_name&quot;:&quot;青馬自檢&quot;,
+  &quot;start_url&quot;:&quot;.&quot;,
+  &quot;display&quot;:&quot;standalone&quot;,
+  &quot;background_color&quot;:&quot;#0ea5e9&quot;,
+  &quot;theme_color&quot;:&quot;#0ea5e9&quot;,
+  &quot;icons&quot;:[]
+}">
+
+<style>
+  :root{--c:#0ea5e9;--g:#f6f7fb;--b:#111;}
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",sans-serif;margin:0;background:var(--g);color:#1f2937}
+  .wrap{max-width:760px;margin:24px auto;padding:20px;background:#fff;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+  h1{margin:0 0 6px;font-size:22px}
+  .sub{color:#6b7280;margin:0 0 18px}
+  label{display:block;margin:10px 0 6px}
+  input,select,textarea,button{font:inherit}
+  input,select,textarea{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:12px;background:#fafafa}
+  textarea{resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .btn{background:var(--c);color:#fff;border:none;border-radius:12px;padding:12px 16px;cursor:pointer}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .muted{color:#6b7280;font-size:12px}
+  .prog{height:8px;background:#e5e7eb;border-radius:999px;margin:12px 0 0;overflow:hidden}
+  .bar{height:100%;width:0;background:var(--c);transition:width .2s}
+  .ok{background:#ecfdf5;border:1px solid #10b98133;color:#065f46;padding:12px;border-radius:12px;margin-top:14px}
+  .err{background:#fef2f2;border:1px solid #ef444433;color:#7f1d1d;padding:12px;border-radius:12px;margin-top:14px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:999px;padding:6px 10px;font-size:12px}
+  .foot{margin-top:18px;font-size:12px;color:#6b7280}
+</style>
+
+<body>
+<div class="wrap">
+  <h1>青馬耐震自檢</h1>
+  <p class="sub">填寫住家資訊、上傳照片，系統提供初步風險評估與補強方向（免費）。</p>
+
+  <div class="row">
+    <div>
+      <label>姓名</label>
+      <input id="name" placeholder="王小明" />
+    </div>
+    <div>
+      <label>電話</label>
+      <input id="phone" placeholder="0912-345-678" />
+    </div>
+  </div>
+
+  <label>電子信箱（選填，用於回覆收件確認）</label>
+  <input id="email" placeholder="you@example.com" />
+
+  <label>地址</label>
+  <input id="address" placeholder="新北市○○區○○路○號" />
+
+  <div class="row">
+    <div>
+      <label>結構型式</label>
+      <select id="building_type">
+        <option>RC</option><option>SRC</option><option>鋼構</option><option>磚造</option><option>其他</option>
+      </select>
+    </div>
+    <div>
+      <label>屋齡（年）</label>
+      <input id="year" type="number" min="0" value="30" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>樓層數</label>
+      <input id="floors" type="number" min="1" value="5" />
+    </div>
+    <div>
+      <label>是否加蓋</label>
+      <select id="add_on">
+        <option>none</option><option>頂樓加蓋</option><option>外推</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>裂縫寬度</label>
+      <select id="crack_width">
+        <option>&lt;0.2</option><option>0.2-0.5</option><option>&gt;0.5</option>
+      </select>
+    </div>
+    <div>
+      <label>裂縫位置</label>
+      <select id="crack_location">
+        <option>樑</option><option>柱</option><option>剪力牆</option><option>其他</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>是否傾斜</label>
+      <select id="tilt"><option>否</option><option>是</option></select>
+    </div>
+    <div>
+      <label>鋼筋外露</label>
+      <select id="rust"><option>否</option><option>是</option></select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>是否滲水</label>
+      <select id="leak"><option>否</option><option>是</option></select>
+    </div>
+    <div>
+      <label>定位</label>
+      <button class="btn" id="gpsBtn" type="button">取得座標</button>
+      <div class="muted" id="gpsTxt">尚未取得</div>
+    </div>
+  </div>
+
+  <label>現場照片（最多 5 張，會自動壓縮）</label>
+  <input id="photos" type="file" accept="image/*" multiple />
+  <div class="prog"><div class="bar" id="bar"></div></div>
+
+  <label>備註</label>
+  <textarea id="note" rows="3" placeholder="其他補充說明"></textarea>
+
+  <div style="display:flex;gap:8px;margin-top:14px">
+    <button class="btn" id="preview" type="button">預估風險</button>
+    <button class="btn" id="send" type="button">送出申請</button>
+  </div>
+
+  <div id="msg"></div>
+
+  <div id="suggest" style="display:none">
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="foot">送出即表示同意將資料用於耐震自檢與聯絡服務；照片僅供內部評估，不公開。</div>
+</div>
+
+<script>
+/* ======= 你要改的兩個變數 ======= */
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyIjs_AfQB51v43OsTTPP4mB0ZdyImK8UgbLeOpILS-8L5tztk4X2OXVrlGVgk96Z9Rhw/exec';
+const SECRET_KEY   = 'CHINGMA-2025';
+/* ================================= */
+
+let lat='', lng='';
+const $ = id => document.getElementById(id);
+const setBar = p => $('bar').style.width = (p||0)+'%';
+
+$('gpsBtn').onclick = () => {
+  navigator.geolocation?.getCurrentPosition(
+    p=>{ lat=p.coords.latitude.toFixed(6); lng=p.coords.longitude.toFixed(6); $('gpsTxt').textContent = `${lat}, ${lng}`; },
+    _=>{ $('gpsTxt').textContent = '無法取得定位'; }
+  );
+};
+
+$('photos').addEventListener('change', async (e)=>{
+  const files = [...e.target.files].slice(0,5);
+  if (!files.length){ setBar(0); return; }
+  setBar(5);
+});
+
+$('preview').onclick = ()=>{
+  const s = calcScore();
+  const risk = s>=8?'高':(s>=4?'中':'低');
+  const plans = suggestPlans(risk, $('crack_location').value);
+  renderSuggest(risk, s, plans);
+};
+
+$('send').onclick = async ()=>{
+  const msg = $('msg'); msg.innerHTML = '';
+  const files = [...$('photos').files].slice(0,5);
+
+  // 壓縮圖片
+  const photos = [];
+  for (let i=0;i<files.length;i++){
+    photos.push(await compress(files[i]));
+    setBar( Math.round(((i+1)/Math.max(1,files.length))*100) );
+  }
+
+  const payload = {
+    sec: SECRET_KEY,
+    name: $('name').value.trim(),
+    phone: $('phone').value.trim(),
+    email: $('email').value.trim(),
+    address: $('address').value.trim(),
+    lat, lng,
+    building_type: $('building_type').value,
+    year: $('year').value,
+    floors: $('floors').value,
+    add_on: $('add_on').value,
+    crack_width: mapWidth($('crack_width').value),
+    crack_location: $('crack_location').value,
+    tilt: $('tilt').value==='是' ? 'yes':'no',
+    rust: $('rust').value==='是' ? 'yes':'no',
+    leak: $('leak').value==='是' ? 'yes':'no',
+    score: calcScore(), risk: '', plan_suggested: [],
+    photos,
+    note: $('note').value.trim()
+  };
+
+  try{
+    const r = await fetch(GAS_ENDPOINT, { method:'POST', body: JSON.stringify(payload) });
+    const text = await r.text();
+    msg.innerHTML = `<div class="ok">✅ 已送出！伺服器回應：<br><code>${text.replace(/[<>&]/g,s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s]))}</code></div>`;
+    // 送出後清空
+    $('photos').value = ''; setBar(0);
+  }catch(e){
+    msg.innerHTML = `<div class="err">❌ 送出失敗：${e}</div>`;
+  }
+};
+
+function mapWidth(w){ if (w==='>0.5') return '>0.5'; if (w==='0.2-0.5') return '0.2-0.5'; return '<0.2'; }
+function calcScore(){
+  let s=0;
+  const w=$('crack_width').value, y=Number($('year').value), t=$('tilt').value, r=$('rust').value, l=$('leak').value;
+  if (w==='>0.5') s+=4; else if (w==='0.2-0.5') s+=2;
+  if (y>30) s+=2; else if (y>=15) s+=1;
+  if (t==='是') s+=3;
+  if (r==='是') s+=2;
+  if (l==='是') s+=2;
+  return s;
+}
+function suggestPlans(risk, loc){
+  const out=[];
+  if (risk==='低') out.push('裂縫封閉/表面防水');
+  else if (risk==='中') out.push('柱角CFRP','局部鋼板貼補');
+  else out.push('局部鋼構支撐+CFRP','專人現勘');
+  if (loc.includes('柱')) out.unshift('柱包覆CFRP');
+  if (loc.includes('樑')) out.unshift('梁端補強');
+  return [...new Set(out)];
+}
+function renderSuggest(risk, score, plans){
+  const chips = $('chips');
+  chips.innerHTML = `<span class="chip">風險：${risk}</span><span class="chip">分數：${score}</span>` +
+                    plans.map(p=>`<span class="chip">${p}</span>`).join('');
+  $('suggest').style.display='block';
+}
+
+/* 影像壓縮：長邊 1600px、品質 0.7，回傳 base64（不含 data:前綴） */
+async function compress(file, maxW=1600){
+  const img = await fileToImage(file);
+  const ratio = Math.min(1, maxW / Math.max(img.width, img.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(img.width*ratio);
+  canvas.height = Math.round(img.height*ratio);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise(res=> canvas.toBlob(res, 'image/jpeg', 0.7));
+  const b64 = await blobToBase64(blob);
+  return b64.split(',')[1] || b64;
+}
+function fileToImage(file){
+  return new Promise((res,rej)=>{
+    const img = new Image();
+    img.onload = ()=>res(img);
+    img.onerror = rej;
+    img.src = URL.createObjectURL(file);
+  });
+}
+function blobToBase64(blob){
+  return new Promise((res,rej)=>{
+    const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob);
+  });
+}
+
+/* PWA：同資料夾放 sw.js 就能安裝到桌面 */
+if ('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
