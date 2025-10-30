@@ -272,8 +272,13 @@ function blobToBase64(blob){
   });
 }
 
-/* PWA：同資料夾放 sw.js 就能安裝到桌面 */
-if ('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+<!-- PWA：註冊新版 Service Worker -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js?v=3')
+    .then(() => console.log('✅ Service Worker 註冊成功'))
+    .catch(err => console.error('❌ SW 註冊失敗', err));
+}
 </script>
 </body>
 </html>
